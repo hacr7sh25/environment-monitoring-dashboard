@@ -6,7 +6,7 @@ import datetime
 # Streamlit command to run: streamlit run dashboard.py
 
 # API Key for AQI Data
-API_KEY = "9d7c2e651f004587d12a7809d2b6e43332eaa17d"
+API_KEY = "Add a key"
 
 # List of cities
 cities = ["Bangalore", "Delhi", "Mumbai", "Chennai", "Kolkata", "Hyderabad"]
