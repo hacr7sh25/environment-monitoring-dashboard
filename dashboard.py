@@ -2,8 +2,7 @@ import requests
 import streamlit as st
 import matplotlib.pyplot as plt
 import datetime
-
-# Streamlit command to run: streamlit run dashboard.py
+import os
 
 # API Key for AQI Data
 API_KEY = "Add a key"
@@ -13,7 +12,7 @@ cities = ["Bangalore", "Delhi", "Mumbai", "Chennai", "Kolkata", "Hyderabad"]
 
 # Streamlit Dashboard UI
 st.title("🌍 Environmental Monitoring Dashboard")
-st.subheader("Real-Time Air Quality and Weather Monitoring")
+st.subheader("Real-Time Air Quality and Pollution Monitoring")
 
 # Select city
 CITY = st.selectbox("Select a city:", cities)
@@ -33,21 +32,46 @@ if aqi_data["status"] == "ok":
     aqi = aqi_data["data"]["aqi"]
     st.metric(label="🌫️ Air Quality Index (AQI)", value=aqi)
 
-    # Define AQI Levels and Recommendations
+    # Define AQI Levels
     if aqi <= 50:
-        st.success("🟢 Good Air Quality - Enjoy outdoor activities!")
+        st.success("🟢 Good Air Quality")
+        eco_tips = [
+            "Maintain green spaces 🌱",
+            "Reduce waste and recycle ♻️",
+            "Use bicycles or walk 🚶‍♂️"
+        ]
     elif aqi <= 100:
-        st.info("🟡 Moderate Air Quality - Safe for most, but be cautious if sensitive.")
+        st.info("🟡 Moderate Air Quality")
+        eco_tips = [
+            "Carpool to reduce emissions 🚗",
+            "Avoid burning waste 🔥",
+            "Plant more trees 🌳"
+        ]
     elif aqi <= 150:
-        st.warning("🟠 Unhealthy for Sensitive Groups - Reduce outdoor activities if needed.")
+        st.warning("🟠 Unhealthy for Sensitive Groups")
+        eco_tips = [
+            "Limit outdoor activities 🏃",
+            "Use air purifiers at home 🏠",
+            "Advocate for pollution control 🏛️"
+        ]
     else:
-        st.error("🔴 Unhealthy Air Quality - Avoid outdoor exertion and wear a mask.")
+        st.error("🔴 Unhealthy Air Quality")
+        eco_tips = [
+            "Stay indoors when possible 🏠",
+            "Wear a mask outdoors 😷",
+            "Encourage public policy changes 📢"
+        ]
 
-    # Simulated past AQI data
+    # Display Eco-Friendly Tips
+    st.subheader("🌿 Eco-Friendly Actions You Can Take")
+    for tip in eco_tips:
+        st.write(f"- {tip}")
+
+    # Simulated past AQI data (since free API doesn't provide historical data)
     timestamps = [(datetime.datetime.now() - datetime.timedelta(hours=i)).strftime("%H:%M") for i in range(10)][::-1]
     past_aqi = [aqi - i * 3 for i in range(10)]  # Fake trend for demo
 
-    # Plot AQI trend
+    # Plot the AQI trend
     fig, ax = plt.subplots()
     ax.plot(timestamps, past_aqi, marker="o", linestyle="-", color="blue")
     ax.set_xlabel("Time")
@@ -58,53 +82,48 @@ if aqi_data["status"] == "ok":
     # Show the graph
     st.pyplot(fig)
 
-    # Pollution Source Analysis (Simulated Data)
-    st.subheader("🔬 Pollution Source Analysis")
-    pollution_sources = {
-        "Vehicle Emissions": 40,
-        "Industrial Waste": 25,
-        "Construction Dust": 15,
-        "Agricultural Burning": 10,
-        "Other": 10
-    }
-
-    # Plot pollution source distribution
-    fig2, ax2 = plt.subplots()
-    ax2.pie(pollution_sources.values(), labels=pollution_sources.keys(), autopct="%1.1f%%", colors=["red", "orange", "yellow", "green", "blue"])
-    ax2.set_title("Estimated Contribution of Pollution Sources")
-
-    st.pyplot(fig2)
-
 else:
     st.error("❌ Failed to fetch AQI data. Check API Key or City Name.")
 
 # Display Weather Data
 if "current_weather" in weather_data:
     temperature = weather_data["current_weather"].get("temperature", "N/A")
-    weather_code = weather_data["current_weather"].get("weathercode", "N/A")
-
-    # Map weather codes to icons
-    weather_icons = {
-        0: "☀️ Clear Sky",
-        1: "🌤️ Partly Cloudy",
-        2: "⛅ Cloudy",
-        3: "☁️ Overcast",
-        45: "🌫️ Foggy",
-        48: "🌫️ Dense Fog",
-        51: "🌦️ Light Drizzle",
-        53: "🌧️ Moderate Drizzle",
-        55: "🌧️ Heavy Drizzle",
-        61: "🌦️ Light Rain",
-        63: "🌧️ Moderate Rain",
-        65: "🌧️ Heavy Rain",
-        95: "⛈️ Thunderstorm",
-        99: "🌪️ Extreme Storm"
-    }
-
-    weather_description = weather_icons.get(weather_code, "Unknown Weather")
-
     st.metric(label="🌡️ Temperature (°C)", value=temperature)
-    st.write(f"Weather Condition: {weather_description}")
-
 else:
     st.error("❌ Failed to fetch weather data.")
+
+# ------------------------------------------
+# 🌍 Crowd-Sourced Pollution Reporting System
+# ------------------------------------------
+
+st.subheader("📸 Report a Pollution Incident")
+
+# User input fields
+report_description = st.text_area("Describe the pollution issue (e.g., smoke, waste dumping, etc.)")
+report_image = st.file_uploader("Upload an image (optional)", type=["jpg", "png", "jpeg"])
+
+# Submit button
+if st.button("Submit Report"):
+    if report_description:
+        report_data = f"**Pollution Report:** {report_description}\n"
+        if report_image:
+            report_image_path = f"reports/{report_image.name}"
+            with open(report_image_path, "wb") as f:
+                f.write(report_image.getbuffer())
+            report_data += f"![Uploaded Image](reports/{report_image.name})"
+
+        # Save report to file
+        os.makedirs("reports", exist_ok=True)
+        with open("reports/pollution_reports.txt", "a") as report_file:
+            report_file.write(report_data + "\n\n")
+
+        st.success("✅ Pollution report submitted successfully!")
+    else:
+        st.warning("⚠️ Please provide a description before submitting.")
+
+# Show previous reports
+if os.path.exists("reports/pollution_reports.txt"):
+    st.subheader("📜 Recent Pollution Reports")
+    with open("reports/pollution_reports.txt", "r") as report_file:
+        reports = report_file.read()
+        st.markdown(reports)
